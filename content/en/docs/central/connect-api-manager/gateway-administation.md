@@ -662,62 +662,27 @@ Multiple Gateways on the same machine - file path with wildcard
 EVENT_LOG_PATHS=<API GATEWAY INSTALL DIRECTORY>/apigateway/events/group-2_instance-?.log
 ```
 
-#### Customizing central section (traceability_agent.central)
+#### Customizing central variables (traceability_agent.central)
 
-This section connects the agent to Amplify Central and determine how to published the discovered APIs.
-This section is exactly the same as the discovery agent. Refer to [](/docs/central/)
+This section connects the agent to Amplify Central.
+This section is exactly the same as the [discovery agent](/docs/central/connect-api-manager/gateway-administation/#customizing-central-variables)
 
-`url`: The Amplify central url. Default value is **<https://apicentral.axway.com>**.
+Once all data is gathered, the variable list should look like:
 
-`organizationID`: The Organization ID from Amplify Central. Locate this at Platform > User > Organization > ORrg ID field.
-
-`deployment`: The APIC deployment environment. Default value is **prod**.
-
-`environment`: The environment name you created when [preparing Amplify Central](/docs/central/cli_central/cli_install/).
-
-`auth.url`: The Amplify login URL. Default value is **<https://login.axway.com/auth>**.
-
-`auth.realm`: The Realm used to authenticate for Amplify Central. Default value is **Broker**.
-
-`auth.clientId`: The name of the Service Account you created when [preparing Amplify Central](/docs/central/cli_central/cli_install/). Locate this at Amplify Central > Access > Service Accounts.
-
-`auth.privateKey`: The location of the private key file you created when [preparing Amplify Central](/docs/central/cli_central/cli_install/). Absolute file path is recommended to avoid confusion.
-
-`auth.publicKey`:  The location of the public key file you created when [preparing Amplify Central](/docs/central/cli_central/cli_install/). Absolute file path is recommended to avoid confusion.  
-
-`auth.keyPassword`: The key password to open the key. None set up by default.
-
-`auth.timeout`: Timeout for the authentication. Default value is **10s**.
-
-`proxy_url`: The URL for the proxy for Amplify Central `<http://username:password@hostname:port>`. If empty, no proxy is defined.
-
-`ssl` settings: By default, for connecting to Amplify Central, agent uses TLS 1.2 with a predefined list of cipher suites. Refer to [Administer API Manager agent security](/docs/central/connect-api-manager/agent-security-api-manager/) section for changing this behavior.
-
-Once all data is gathered, this section should look like:
-
-```yaml
-traceability_agent:
-  ...
-  central:
-    url=https://apicentral.axway.com
-    organizationID=68794y2
-    deployment=prod
-    environment=my-v7-env
-    auth:
-      url=https://login.axway.com/auth
-       realm=Broker
-      clientId="DOSA_68732642t64545..."
-      privateKey=/home/APIC-agents/private_key.pem
-      publicKey=/home/APIC-agents/public_key.pem
-      keyPassword=""
-      timeout=10s
-    ssl:
-#       minVersion={CENTRAL_SSL_MINVERSION:""}
-#       maxVersion=${CENTRAL_SSL_MAXVERSION:""}
-#       nextProtos=${CENTRAL_SSL_NEXTPROTOS:[]}
-#       cipherSuites=${CENTRAL_SSL_CIPHERSUITES:[]}
-#       insecureSkipVerify=${CENTRAL_SSL_INSECURESKIPVERIFY:false}
-#    proxyUrl="http://username:password@hostname:port"
+```shell
+#CENTRAL_URL=https://apicentral.axway.com
+CENTRAL_TEAM=Dev
+CENTRAL_ORGANIZATIONID=68794y2
+CENTRAL_ENVIRONMENT=my-v7-env
+#CENTRAL_APISERVERVERSION=v1alpha1
+#CENTRAL_MODE=publishToEnvironmmentAndCatalog
+#CENTRAL_AUTH_URL=https://login.axway.com/auth
+#CENTRAL_AUTH_REALM=Broker
+CENTRAL_AUTH_CLIENTID=DOSA_66743...
+CENTRAL_AUTH_PRIVATEKEY=/home/APIC-agents/private_key.pem
+CENTRAL_AUTH_PUBLICKEY=/home/APIC-agents/public_key.pem
+#CENTRAL_AUTH_KEYPASSWORD:
+#CENTRAL_AUTH_TIMEOUT=10s
 ```
 
 #### Customizing apigateway section (traceability_agent.apigateway)
