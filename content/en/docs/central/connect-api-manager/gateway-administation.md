@@ -574,8 +574,8 @@ The traceability agent is used to filter the Axway API Gateway logs that are rel
 
 The binary agent can run in the following mode:
 
-* default: with a yaml configuration file having the same name as the agent binary - `traceability_agent.yml`. Some values (Central url / authentication url) are defaulted to avoid mistake and will not be visible in the provided discovery_agent.yml file.
-* **recommended**: with an environment variable file `ta_env_vars.env`. All values in the `traceability_agent.yml` file can be overridden with environment variables. Those environment variables can be stored in a single file and this file can be located anywhere (use --envFile flag in the agent command line to access it=`./traceability_agent --envFile /home/config/ta_env_vars.env`). Like this it will be easy to update the agent (binary/yaml) without loosing the agent configuration. All environment variables are described in [Discovery Agent variables](/docs/central/connect-api-manager/agent-variables/) section.
+* default: with a yaml configuration file having the same name as the agent binary - `traceability_agent.yml`. Some values (Central url / authentication url) are defaulted to avoid mistake and will not be visible in the provided traceability_agent.yml file.
+* **recommended**: with an environment variable file `ta_env_vars.env`. All values in the `traceability_agent.yml` file can be overridden with environment variables. Those environment variables can be stored in a single file and this file can be located anywhere (use --envFile flag in the agent command line to access it=`./traceability_agent --envFile /home/config/ta_env_vars.env`). Like this it will be easy to update the agent (binary/yaml) without loosing the agent configuration. All environment variables are described in [Traceability Agent variables](/docs/central/connect-api-manager/agent-variables/) section.
 
 The containerized agent can run in the following mode:
 
@@ -636,7 +636,7 @@ docker pull axway.jfrog.io/ampc-public-docker-release/agent/v7-traceability-agen
 
 ### Customizing the Traceability Agent environment variable file
 
-The `ta_env_vars.env` configuration file contain six sections to customize: the beat input, central, apigateway, apimanager, output ingestion service and log.
+The `ta_env_vars.env` configuration file contain six sections to customize: the beat input, apimanager, apigateway, central, output ingestion service and log.
 
 #### Customizing beat input variables
 
@@ -659,17 +659,64 @@ EVENT_LOG_PATHS=<API GATEWAY INSTALL DIRECTORY>/apigateway/events/group-2_instan
 Multiple Gateways on the same machine - file path with wildcard
 
 ```shell
+# Input files
 EVENT_LOG_PATHS=<API GATEWAY INSTALL DIRECTORY>/apigateway/events/group-2_instance-?.log
 ```
 
-#### Customizing central variables (traceability_agent.central)
+#### Customizing Traceability agent API Manager connectivity variables
+
+This section tells the agent which API needs to be monitored=one that has been discovered by the Discovery Agent.
+This section is exactly the same as the [discovery agent - API Manager](/docs/central/connect-api-manager/gateway-administation/#customizing-apimanager-variables)
+
+Once all data is gathered, this section should look like:
+
+```shell
+# API Manager connectivity
+APIMANAGER_HOST=localhost
+APIMANAGER_PORT=8075
+APIMANAGER_AUTH_USERNAME=apiManagerUser
+APIMANAGER_AUTH_PASSWORD=apiManagerUserPassword
+```
+
+#### Customizing Traceability agent API Gateway connectivity variables
+
+This section helps the agent to collect the header from request/response from the API Gateway system.
+
+`APIGATEWAY_GETHEADERS`: Tells the agent to  call the API Gateway API to get additional transaction details (headers). Default value is **true**. If false, API Gateway config does not need to be set and no headers will be send to Amplify Central.
+
+`APIGATEWAY_HOST`: The host that Axway API Gateway is running on. Default value is **localhost**.
+
+`APIGATEWAY_PORT`: The port that Axway API Gateway is listening on. Default value is **8090**.
+
+`APIGATEWAY_POLLINTERVAL`: The frequency in which the agent polls the logs in us, ms, s, m, h. Default value is **1m**.
+
+`APIGATEWAY_AUTH_USERNAME`: An Axway API Gateway username with the "API Gateway operator" role.
+
+`APIGATEWAY_AUTH_PASSWORD`: The Axway API Gateway username password in clear text.
+
+Security connection settings: By default, for connecting to API Gateway, the agent uses TLS 1.2 with a predefined list of cipher suites. Refer to [Administer API Manager agent security](/docs/central/connect-api-manager/agent-security-api-manager/) section for changing this behavior.
+
+Once all data is gathered, this section should look like:
+
+```shell
+# API Gateway connectivity
+APIGATEWAY_HOST=localhost
+APIGATEWAY_PORT=8090
+APIGATEWAY_AUTH_USERNAME=myApiGatewayOperatorUser
+APIGATEWAY_AUTH_PASSWORD=myApiGatewayOperatorUserPassword
+#APIGATEWAY_GETHEADERS=true 
+#APIGATEWAY_POLLINTERVAL
+```
+
+#### Customizing Traceability agent Central connectivity variables
 
 This section connects the agent to Amplify Central.
-This section is exactly the same as the [discovery agent](/docs/central/connect-api-manager/gateway-administation/#customizing-central-variables)
+This section is exactly the same as the [discovery agent - Central connectivity](/docs/central/connect-api-manager/gateway-administation/#customizing-central-variables)
 
 Once all data is gathered, the variable list should look like:
 
 ```shell
+# Central connectivity
 #CENTRAL_URL=https://apicentral.axway.com
 CENTRAL_TEAM=Dev
 CENTRAL_ORGANIZATIONID=68794y2
@@ -685,130 +732,37 @@ CENTRAL_AUTH_PUBLICKEY=/home/APIC-agents/public_key.pem
 #CENTRAL_AUTH_TIMEOUT=10s
 ```
 
-#### Customizing apigateway section (traceability_agent.apigateway)
-
-This section helps the agent to collect the header from request/response from the API Gateway system.
-
-`getHeaders`: Tells the agent to  call the API Gateway API to get additional transaction details (headers). Default value is **true**. If false, API Gateway config does not need to be set and no headers will be send to Amplify Central.
-
-`host`: The host that Axway API Gateway is running on. Default value is **localhost**.
-
-`port`: The port that Axway API Gateway is listening on. Default value is **8090**.
-
-`pollInterval`: The frequency in which the agent polls the logs in us, ms, s, m, h. Default value is **1m**.
-
-`auth.username`: An Axway API Gateway username with the "API Gateway operator" role.
-
-`auth.password`: The Axway API Gateway username password in clear text.
-
-`ssl` settings: By default, for connecting to API Gateway, the agent uses TLS 1.2 with a predefined list of cipher suites. Refer to [Administer API Manager agent security](/docs/central/connect-api-manager/agent-security-api-manager/) section for changing this behavior.
-
-Once all data is gathered, this section should look like:
-
-```yaml
-traceability_agent:
-  ...
-  apigateway:
-    getHeaders=true
-    host=localhost
-    port=8090
-    pollInterval=1m
-    auth:
-      username=myApiGatewayOperatorUser
-      password=myApiGatewayOperatorUserPassword
-    ssl:
-#      minVersison=${APIGATEWAY_SSL_MINVERSION:""}
-#      maxVersion=${APIGATEWAY_SSL_MAXVERSION:""}
-#      nextProtos=${APIGATEWAY_SSL_NEXTPROTOS:[]}
-#      cipherSuites=${APIGATEWAY_SSL_CIPHERSUITES:[]}
-#      insecureSkipVerify=${APIGATEWAY_SSL_INSECURESKIPVERIFY:false}
-#    proxyUrl=${APIGATEWAY_PROXYURL:""}
-```
-
-#### Customizing apimanager section (traceability_agent.apimanager)
-
-This section tells the agent which API needs to be monitored=one that has been discovered by the Discovery Agent.
-
-`host`: The Machine name where API Manager is running. localhost value can be used, as the agent is installed on the same machine as the API Manager.
-
-`port`: The API Manager port number (**8075** by default).
-
-`pollInterval`: The frequency in which API Manager is polled for new endpoints. Default value is 30s.
-
-`apiVersion`: The API Manager API version to use. Default value is **1.3**.
-
-`auth.username`: An API Manager user the agent will use to connect to the API Manager. This user must have either an “API Manager Administrator” or “Organization administrator” role. Based on the role of this user, the agent is able to:
-
-* discover any API from any organization (“API Manager Administrator”)  
-* discovery any API from a specific organization (“Organization administrator”)
-
-For the Traceability Agent to report correctly the discovered API traffic, it is recommended to use the same user as the one used for discovering APIs.
-
-`auth.password`: The password of the API Manager user in clear text.
-
-`ssl` settings: By default, for connecting to API Manager, the agent uses TLS 1.2 with a predefined list of cipher suites. Refer to [Administer API Manager agent security](/docs/central/connect-api-manager/agent-security-api-manager/) section for changing this behavior.
-
-Once all data is gathered, this section should look like:
-
-```yaml
-traceability_agent:
-  ...
-  apimanager:
-    host=localhost
-    port=8075
-    pollInterval=1m
-    apiVersion=1.3
-    auth:
-      username=myAPIManagerUserName
-      password=myAPIManagerUserPassword
-    ssl:
-#      minVersion=${APIMANAGER_SSL_MINVERSION:""}
-#      maxVersion=${APIMANAGER_SSL_MAXVERSION:""}
-#      nextProtos=${APIMANAGER_SSL_NEXTPROTOS:[]}
-#      cipherSuites=${APIMANAGER_SSL_CIPHERSUITES:[]}
-#      insecureSkipVerify=${APIMANAGER_SSL_INSECURESKIPVERIFY:false}
-#    proxyUrl=${APIMANAGER_PROXYURL:""}
-```
-
-#### Customizing output ingestion service section (output.traceability)
+#### Customizing Traceability agent output ingestion service variables
 
 This section describes where the logs should be sent on Amplify Central.
 
-`hosts`: The host and port of the ingestion service to forward the transaction log entries. Default value is **ingestion-lumberjack.datasearch.axway.com:453**.
+`TRACEABILITY_HOST`: The host and port of the ingestion service to forward the transaction log entries. Default value is **ingestion-lumberjack.datasearch.axway.com:453**.
 
-`protocol`: The protocol (https or tcp) to be used for communicating with ingestion service. Default value is **tcp**.
+`TRACEABILITY_PROTOCOL`: The protocol (https or tcp) to be used for communicating with ingestion service. Default value is **tcp**.
 
-`compression_level`: The gzip compression level for the output event. Default value is **3**.
+`TRACEABILITY_PROXYURL`: The socks5 or http URL of the proxy server for ingestion service (**socks5://username:password@hostname:port**) to use when the API Management eco-system is not allowed to access the internet world where Amplify Central is installed. **username** and **password** are optional and can be omitted if not required by the proxy configuration. Leaving this value empty means that no proxy will be used to connect to Amplify Central ingestion service.
 
-`ssl.cipher_suites`: List the cipher suites for the TLS connectivity. See the [Administer API Manager agent security](/docs/central/connect-api-manager/agent-security-api-manager/) topic for more information.
+`TRACEABILITY_COMPRESSIONLEVEL`: The gzip compression level for the output event. Default value is **3**.
 
-`proxy_url`: The socks5 or http URL of the proxy server for ingestion service (**socks5://username:password@hostname:port**) to use when the API Management eco-system is not allowed to access the internet world where Amplify Central is installed. **username** and **password** are optional and can be omitted if not required by the proxy configuration. Leaving this value empty means that no proxy will be used to connect to Amplify Central ingestion service.
+`TRACEABILITY_BULKMAXSIZE`: maximum number of events to bulk in  a single ingestion request. Default value is 100.
+
+`TRACEABILITY_TIMEOUT`: time to wait for ingestion response. Default value is 300s.
+
+Security connection settings: By default, for connecting to API Gateway, the agent uses TLS 1.2 with a predefined list of cipher suites. Refer to [Administer API Manager agent security](/docs/central/connect-api-manager/agent-security-api-manager/) section for changing this behavior.
 
 Once all data is gathered, the section should look like this if you do not use a proxy:
 
-```yaml
+```shell
 # Send output to Central Database
-output.traceability:
-  enabled=true
-  hosts=ingestion-lumberjack.datasearch.axway.com:453
-  protocol=tcp
-  compression_level=3
-  ssl:
-    enabled=true
-    verification_mode=none
-    cipher_suites:
-      - "ECDHE-ECDSA-AES-128-GCM-SHA256"
-      - "ECDHE-ECDSA-AES-256-GCM-SHA384"
-      - "ECDHE-ECDSA-AES-128-CBC-SHA256"
-      - "ECDHE-ECDSA-CHACHA20-POLY1305"
-      - "ECDHE-RSA-AES-128-CBC-SHA256"
-      - "ECDHE-RSA-AES-128-GCM-SHA256"
-      - "ECDHE-RSA-AES-256-GCM-SHA384"
-   pipelining=0
-#   proxy_url=socks5://username:password@hostname:port
+TRACEABILITY_HOST=ingestion-lumberjack.datasearch.axway.com:453
+TRACEABILITY_PROTOCOL=tcp
+#TRACEABILITY_PROXYURL=socks5://username:password@hostname:port
+#TRACEABILITY_COMPRESSIONLEVEL=3
+#TRACEABILITY_BULKMAXSIZE=100
+#TRACEABILITY_TIMEOUT=300s
 ```
 
-#### Customizing beat queuing section (queue)
+#### Customizing Traceability agent beat queuing section variables
 
 The queue section defines the internal Filebeat queue to store events before publishing them. The queue is responsible for buffering and combining events into batches that can be consumed by the outputs. The outputs use bulk operations to send a batch of events in one transaction.
 
@@ -820,150 +774,75 @@ The queue section defines the internal Filebeat queue to store events before pub
 
 Once all data is gathered, this section should look like:
 
-```yaml
-queue:
-  mem:
-    events=${QUEUE_MEM_EVENTS:2048}
-    flush:
-      min_events=${QUEUE_MEM_FLUSH_MINEVENTS:100}
-      timeout=${QUEUE_MEM_FLUSH_TIMEOUT:1s}
+```shell
+#QUEUE_MEM_EVENTS=2048
+#QUEUE_MEM_FLUSH_MINEVENTS=100
+#QUEUE_MEM_FLUSH_TIMEOUT=1s
 ```
 
-#### Customizing log section (logging)
+#### Customizing Traceability agent log variables
 
-The log section defines how the agent manages its logs.
-
-`to_stderr`: (default configuration) The output is logged onto the screen.
-
-`to_file`:  (alternate configuration) The output is logged into a file. Requires more configuration (refer to <https://www.elastic.co/guide/en/beats/filebeat/current/configuration-logging.html>).
-
-`level`: The log level for output messages (debug, info, warn, error). Default value is **info**.
+The log section defines how the agent manages its logs. This section is similar to the one define for the [discovery agent](/docs/)
 
 Once all data is gathered, this section should look like this for standard output logging:
 
-```yaml
-logging:
-  metrics:
-    enabled=false
-  # Send all logging output to stderr
-  to_stderr=true
-  # Set log level
-  level=info
-  # Send all logging output to file - change value to_files=true and to_stderr=false
-  to_files=false
-  files:
-    path=./logs
-    name=traceability_agent.log
-    keepfiles=7
-    permissions=0644
+```shell
+LOG_LEVEL=info
+LOG_OUTPUT=stdout
+LOG_PATH=logs
+LOG_FILE_NAME=traceability_agent.log
 ```
 
 #### Validating your custom Traceability Agent configuration file
 
 After customizing all the sections, your traceability_agent.yaml file should look like:
 
-```yaml
-################### Beat Configuration #########################
-traceability_agent:
-  inputs:
-    - type=log
-      paths:
-        - <PATH TO>/group-X_instance-Y.log
-      include_lines=['.*"type":"transaction".*"type":"http".*']
-  central:
-    url=https://apicentral.axway.com
-    organizationID=68794y2
-    deployment=prod
-    environment=my-v7-env
-    auth:
-      url=https://login.axway.com/auth
-      realm=Broker
-      clientId="DOSA_68732642t64545..."
-      privateKey=/home/APIC-agents/private_key.pem
-      publicKey=/home/APIC-agents/public_key.pem
-      keyPassword=""
-      timeout=10s
-    ssl:
-#      minVersion={CENTRAL_SSL_MINVERSION:""}
-#      maxVersion=${CENTRAL_SSL_MAXVERSION:""}
-#      nextProtos=${CENTRAL_SSL_NEXTPROTOS:[]}
-#      cipherSuites=${CENTRAL_SSL_CIPHERSUITES:[]}
-#      insecureSkipVerify=${CENTRAL_SSL_INSECURESKIPVERIFY:false}
-#    proxyUrl="http://username:password@hostname:port"
-  apigateway:
-    getHeaders=true
-    host=localhost
-    port=8090
-    pollInterval=1m
-    auth:
-      username=myApiGatewayOperatorUser
-      password=myApiGatewayOperatorUserPassword
-    ssl:
-#      minVersison=${APIGATEWAY_SSL_MINVERSION:""}
-#      maxVersion=${APIGATEWAY_SSL_MAXVERSION:""}
-#      nextProtos=${APIGATEWAY_SSL_NEXTPROTOS:[]}
-#      cipherSuites=${APIGATEWAY_SSL_CIPHERSUITES:[]}
-#      insecureSkipVerify=${APIGATEWAY_SSL_INSECURESKIPVERIFY:false}
-#    proxyUrl=${APIGATEWAY_PROXYURL:""}
-  apimanager:
-    host=localhost
-    port=8075
-    pollInterval=1m
-    apiVersion=1.3
-    auth:
-      username=myAPIManagerUserName
-      password=myAPIManagerUserPassword
-    ssl:
-#      minVersion=${APIMANAGER_SSL_MINVERSION:""}
-#      maxVersion=${APIMANAGER_SSL_MAXVERSION:""}
-#      nextProtos=${APIMANAGER_SSL_NEXTPROTOS:[]}
-#      cipherSuites=${APIMANAGER_SSL_CIPHERSUITES:[]}
-#      insecureSkipVerify=${APIMANAGER_SSL_INSECURESKIPVERIFY:false}
-#    proxyUrl=${APIMANAGER_PROXYURL:""}
+```shell
+# Input files
+EVENT_LOG_PATHS=<API GATEWAY INSTALL DIRECTORY>/apigateway/events/group-2_instance-?.log
+
+# API Manager connectivity
+APIMANAGER_HOST=localhost
+APIMANAGER_PORT=8075
+APIMANAGER_AUTH_USERNAME=apiManagerUser
+APIMANAGER_AUTH_PASSWORD=apiManagerUserPassword
+
+# API Gateway connectivity
+APIGATEWAY_HOST=localhost
+APIGATEWAY_PORT=8090
+APIGATEWAY_AUTH_USERNAME=myApiGatewayOperatorUser
+APIGATEWAY_AUTH_PASSWORD=myApiGatewayOperatorUserPassword
+#APIGATEWAY_GETHEADERS=true 
+#APIGATEWAY_POLLINTERVAL
+
+# Central connectivity
+#CENTRAL_URL=https://apicentral.axway.com
+CENTRAL_TEAM=Dev
+CENTRAL_ORGANIZATIONID=68794y2
+CENTRAL_ENVIRONMENT=my-v7-env
+#CENTRAL_APISERVERVERSION=v1alpha1
+#CENTRAL_MODE=publishToEnvironmmentAndCatalog
+#CENTRAL_AUTH_URL=https://login.axway.com/auth
+#CENTRAL_AUTH_REALM=Broker
+CENTRAL_AUTH_CLIENTID=DOSA_66743...
+CENTRAL_AUTH_PRIVATEKEY=/home/APIC-agents/private_key.pem
+CENTRAL_AUTH_PUBLICKEY=/home/APIC-agents/public_key.pem
+#CENTRAL_AUTH_KEYPASSWORD:
+#CENTRAL_AUTH_TIMEOUT=10s
 
 # Send output to Central Database
-output.traceability:
-  enabled=true
-  hosts=${TRACEABILITY_URL:ingestion-lumberjack.datasearch.axway.com:453}
-  protocol=${TRACEABILITY_PROTOCOL:"tcp"}
-  compression_level=${TRACEABILITY_COMPRESSIONLEVEL:3}
-  bulk_max_size=${TRACEABILITY_BULKMAXSIZE:100}
-  timeout=${TRACEABILITY_TIMEOUT:300s}
-  pipelining=0
-  ssl:
-    enabled=true
-    verification_mode=none
-    cipher_suites:
-      - "ECDHE-ECDSA-AES-128-GCM-SHA256"
-      - "ECDHE-ECDSA-AES-256-GCM-SHA384"
-      - "ECDHE-ECDSA-AES-128-CBC-SHA256"
-      - "ECDHE-ECDSA-CHACHA20-POLY1305"
-      - "ECDHE-RSA-AES-128-CBC-SHA256"
-      - "ECDHE-RSA-AES-128-GCM-SHA256"
-      - "ECDHE-RSA-AES-256-GCM-SHA384"
-  proxy_url=${TRACEABILITY_PROXYURL:""}
+TRACEABILITY_HOST=ingestion-lumberjack.datasearch.axway.com:453
+TRACEABILITY_PROTOCOL=tcp
+#TRACEABILITY_PROXYURL=socks5://username:password@hostname:port
+#TRACEABILITY_COMPRESSIONLEVEL=3
+#TRACEABILITY_BULKMAXSIZE=100
+#TRACEABILITY_TIMEOUT=300s
 
-queue:
-  mem:
-    events=${QUEUE_MEM_EVENTS:2048}
-    flush:
-      min_events=${QUEUE_MEM_FLUSH_MINEVENTS:100}
-      timeout=${QUEUE_MEM_FLUSH_TIMEOUT:1s}
-
-logging:
-  metrics:
-    enabled=false
-  # Send all logging output to stderr
-  to_stderr=true
-  # Set log level
-  level=info
-  # Send all logging output to file - change value to_files=true and to_stderr=false
-  to_files=false
-  files:
-    path=./logs
-    name=traceability_agent.log
-    keepfiles=7
-    permissions=0644
+#logging
+LOG_LEVEL=info
+LOG_OUTPUT=stdout
+LOG_PATH=logs
+LOG_FILE_NAME=traceability_agent.log
 ```
 
 ### Running the binary Traceability Agent
@@ -976,8 +855,7 @@ Open a shell and run the following command to start up your agent:
 
 ```shell
 cd /home/APIC-agents
-./traceability_agent
-...
+./traceability_agent --envFile ta_env_vars.env
 ```
 
 To stop your agent, press Ctrl+C within the shell.
@@ -990,7 +868,7 @@ Open a shell and run the following command to start up your agent:
 
 ```shell
 cd /home/APIC-agents
-./traceability_agent &
+./traceability_agent --envFile ta_env_vars.env &
 [1] 13186
 ```
 
@@ -1016,13 +894,6 @@ When running as a service, it is best to save your logging to a file rather than
 * Install
 
   To install the service and have it execute as user axway and group axway:
-
-  ```shell
-  cd /home/APIC-agents
-  sudo ./traceability_agent service install -u axway -g axway
-  ```
-
-  Optionally, provide an environment file with all the configuration overwrites for the agent:
 
   ```shell
   cd /home/APIC-agents
