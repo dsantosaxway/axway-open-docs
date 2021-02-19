@@ -37,7 +37,7 @@ The binary agent can run in the following mode:
 
 The containerized agent can run in the following mode:
 
-* With an environment variables configuration file, `env_vars`, supplied as a command line argument when running the Docker image.
+* With an environment variables configuration file, `da_env_vars.env`, supplied as a command line argument when running the Docker image.
 
 ### Installing the Discovery Agent
 
@@ -61,8 +61,8 @@ unzip discovery_agent-latest.zip
 
 #### To install the Dockerized Discovery Agent
 
-Create your Discovery Agent environment file, `env_vars`. See [Discovery Agent variables](/docs/central/connect-api-manager/agent-variables/) for a reference to variable descriptions.
-After customizing all the sections, your `env_vars` file should look like this example file:
+Create your Discovery Agent environment file, `da_env_vars.env`. See [Discovery Agent variables](/docs/central/connect-api-manager/agent-variables/) for a reference to variable descriptions.
+After customizing all the sections, your `da_env_vars.env` file should look like this example file:
 
 ```shell
 # API MANAGER connectivity
@@ -93,9 +93,9 @@ docker pull axway.jfrog.io/ampc-public-docker-release/agent/v7-discovery-agent:l
 
 ### Customizing the Discovery Agent environment variable file
 
-The `da_env_vars.env` configuration file contain 3 sections to personalize: apimanager, central and log.
+The `da_env_vars.env` configuration file contain 3 sections to personalize: API Manager connectivity, central connectivity and logging.
 
-#### Customizing apimanager variables
+#### Customizing Discovery agent API Manager connectivity variables
 
 This section connects the agent to API Manager and determines which APIs should be discovered and published to Amplify Central.
 
@@ -138,7 +138,7 @@ APIMANAGER_FILTER=tag.APITAG==value
 #APIMANAGER_SUBSCRIPTIONSISSUENEWCREDENTIALS=true
 ```
 
-#### Customizing central variables
+#### Customizing Discovery agent Central connectivity variables
 
 This section connects the agent to Amplify Central and determines how to published the discovered APIs.
 
@@ -186,7 +186,7 @@ CENTRAL_AUTH_PUBLICKEY=/home/APIC-agents/public_key.pem
 #CENTRAL_AUTH_TIMEOUT=10s
 ```
 
-#### Customizing SMTP Notification (subscription)
+#### Customizing Discovery agent SMTP Notification for subscription
 
 The SMTP Notification variables defines how the agent manages email settings for subscriptions.
 
@@ -222,7 +222,7 @@ The SMTP Notification variables defines how the agent manages email settings for
 
 `CENTRAL_SUBSCRIPTIONS_NOTIFICATIONS_UNSUBSCRIBEFAILED_BODY` : Body of the email notification for action unsubscribe failed. Default is `Could not unsubscribe to Catalog Item: <a href= ${catalogItemUrl}> ${catalogItemName}</a>`.
 
-#### Customizing email servers
+#### Customizing Discovery agent email server for subscription notifications
 
 The `CENTRAL_SUBSCRIPTIONS_NOTIFICATIONS_HOST`, which represents the email server, can be configured with minimal setup.  This section represents the email servers that have been currently tested. Please note, that all testing has been set up on port 587 signifying TLS support.  
 
@@ -269,7 +269,7 @@ CENTRAL_SUBSCRIPTIONS_NOTIFICATIONS_AUTHTYPE=PLAIN
 * Yahoo - [Application generated yahoo password](https://help.yahoo.com/kb/generate-third-party-passwords-sln15241.html). Use this password in place of your actual password in the agent configuration `password:` field.
 * [AWS  Simple email service](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-smtp.html). Create your [SMTP credentials](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/smtp-credentials.html) and use them in the username (ACCESS KEY) and password (SECRET KEY) of the agent configuration.
 
-### Customizing Webhook Notification (subscription)
+### Customizing Discovery agent Webhook Notification for subscription
 
 The webhook Notification section defines how the agent manages to send notifications to a webhook URL. For using the webhook, you should set the variable `CENTRAL_SUBSCRIPTIONS_APPROVAL_MODE` to webhook value. Other available mode are: manual (default) or auto. Manual means that subscription has to be manually approved by an administrator whereas auto will be automatically approve.
 
@@ -311,7 +311,7 @@ CENTRAL_SUBSCRIPTIONS_NOTIFICATIONS_SMTP_UNSUBSCRIBEFAILED_SUBJECT=Custom Subscr
 CENTRAL_SUBSCRIPTIONS_NOTIFICATIONS_SMTP_UNSUBSCRIBEFAILED_BODY=Could not unsubscribe to Catalog Item=<a href= ${catalogItemUrl}> ${catalogItemName}</a>.<br/>Error encountered: ${message}
 ```
 
-#### Customizing log variables
+#### Customizing Discovery agent logging variables
 
 The log section defines how the agent is managing its logs.
 
@@ -340,11 +340,12 @@ LOG_LEVEL=info
 LOG_OUTPUT=stdout
 LOG_PATH=logs
 LOG_MASKEDVALUES=keyword1, keyword2, keyword3
+LOG_FILE_NAME=discovery_agent.log
 ```
 
-#### Validating your custom Discovery Agent configuration file
+#### Validating your Discovery Agent configuration file
 
-After customizing all the sections, your `da_env_vars.env` file should look like:
+After customizing all variables, your `da_env_vars.env` file should look like:
 
 ```shell
 # API Manager connectivity
@@ -557,10 +558,10 @@ cd /home/APIC-agents
 #### Run the Dockerized Discovery Agent
 
 1. Copy the `private_key.pem` and `public_key.pem` files that were originally created when you set up your Service Account to a keys directory. Make sure the directory is located on the machine being used for deployment.
-2. Start the Docker Discovery Agent pointing to the `env_vars` file and the keys directory. `pwd` relates to the local directory where the docker command is run. For Windows, the absolute path is preferred.
+2. Start the Docker Discovery Agent pointing to the `da_env_vars.env` file and the keys directory. `pwd` relates to the local directory where the docker command is run. For Windows, the absolute path is preferred.
 
    ```shell
-   docker run --env-file ./env_vars -v <pwd>/keys:/keys axway.jfrog.io/ampc-public-docker-release/agent/v7-discovery-agent:latest
+   docker run --env-file ./da_env_vars.env -v <pwd>/keys:/keys axway.jfrog.io/ampc-public-docker-release/agent/v7-discovery-agent:latest
    ```
 3. Run the following health check command to ensure the agent is up and running:
 
@@ -579,7 +580,7 @@ The binary agent can run in the following mode:
 
 The containerized agent can run in the following mode:
 
-* With an environment variables configuration file, `env_vars`, supplied as a command line argument when running the Docker image.
+* With an environment variables configuration file, `ta_env_vars.env`, supplied as a command line argument when running the Docker image.
 
 ### Installing the Traceability Agent
 
@@ -603,8 +604,8 @@ unzip traceability_agent-latest.zip
 
 #### To install the Dockerized Traceability Agent
 
-Create your Discovery Agent environment file, `env_vars`. See [Traceability Agent variables](/docs/central/connect-api-manager/agent-variables/) for a reference to variable descriptions.
-After customizing all the sections, your `env_vars` file should look like this example file:
+Create your Discovery Agent environment file, `ta_env_vars.env`. See [Traceability Agent variables](/docs/central/connect-api-manager/agent-variables/) for a reference to variable descriptions.
+After customizing all the sections, your `ta_env_vars.env` file should look like this example file:
 
 ```shell
 # API MANAGER connectivity
@@ -666,7 +667,7 @@ EVENT_LOG_PATHS=<API GATEWAY INSTALL DIRECTORY>/apigateway/events/group-2_instan
 #### Customizing Traceability agent API Manager connectivity variables
 
 This section tells the agent which API needs to be monitored=one that has been discovered by the Discovery Agent.
-This section is exactly the same as the [discovery agent - API Manager](/docs/central/connect-api-manager/gateway-administation/#customizing-apimanager-variables)
+This section is exactly the same as the [discovery agent - API Manager](/docs/central/connect-api-manager/gateway-administation/#customizing-discovery-agent-api-manager-connectivity-variables)
 
 Once all data is gathered, this section should look like:
 
@@ -711,7 +712,7 @@ APIGATEWAY_AUTH_PASSWORD=myApiGatewayOperatorUserPassword
 #### Customizing Traceability agent Central connectivity variables
 
 This section connects the agent to Amplify Central.
-This section is exactly the same as the [discovery agent - Central connectivity](/docs/central/connect-api-manager/gateway-administation/#customizing-central-variables)
+This section is exactly the same as the [discovery agent - Central connectivity](/docs/central/connect-api-manager/gateway-administation/#customizing-discovery-agent-central-connectivity-variables)
 
 Once all data is gathered, the variable list should look like:
 
@@ -780,9 +781,9 @@ Once all data is gathered, this section should look like:
 #QUEUE_MEM_FLUSH_TIMEOUT=1s
 ```
 
-#### Customizing Traceability agent log variables
+#### Customizing Traceability agent logging variables
 
-The log section defines how the agent manages its logs. This section is similar to the one define for the [discovery agent](/docs/)
+The log section defines how the agent manages its logs. This section is similar to the one define for the [discovery agent](/docs/central/connect-api-manager/gateway-administation/#customizing-discovery-agent-logging-variables)
 
 Once all data is gathered, this section should look like this for standard output logging:
 
@@ -793,9 +794,9 @@ LOG_PATH=logs
 LOG_FILE_NAME=traceability_agent.log
 ```
 
-#### Validating your custom Traceability Agent configuration file
+#### Validating your Traceability Agent configuration file
 
-After customizing all the sections, your traceability_agent.yaml file should look like:
+After customizing all variables, your `ta_env_vars.env` file should look like:
 
 ```shell
 # Input files
@@ -966,13 +967,13 @@ cd /home/APIC-agents
 
 ##### Install and run Dockerized Traceability Agent
 
-* See "To install the Dockerized Discovery Agent" section above for the `env_vars` configuration.
+* See "To install the Dockerized Discovery Agent" section above for the `ta_env_vars.env` configuration.
 
 1. Copy the `private_key.pem` and `public_key.pem` files that were originally created when you set up your Service Account to a keys directory. Make sure the directory is located on the machine being used for deployment.
-2. Start the Traceability Agent pointing to the `env_vars` file, `keys`, and the logging `events` directory. `pwd` relates to the local directory where the docker command is run. For Windows, the absolute path is preferred.
+2. Start the Traceability Agent pointing to the `ta_env_vars.env` file, `keys`, and the logging `events` directory. `pwd` relates to the local directory where the docker command is run. For Windows, the absolute path is preferred.
 
    ```shell
-   docker run --env-file ./env_vars -v <pwd>/keys:/keys -v <pwd>/events:/events axway.jfrog.io/ampc-public-docker-release/agent/v7-traceability:latest
+   docker run --env-file ./ta_env_vars.env -v <pwd>/keys:/keys -v <pwd>/events:/events axway.jfrog.io/ampc-public-docker-release/agent/v7-traceability:latest
    ```
 
    * See [Create and start API Gateway Docker container](/docs/apim_installation/apigw_containers/docker_script_gwimage/#mount-volumes-to-persist-logs-outside-the-api-gateway-container/) for more  information regarding the persistent API Gateway trace and event logs to a directory on your host machine.
