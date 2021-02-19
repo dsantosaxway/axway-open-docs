@@ -637,7 +637,7 @@ docker pull axway.jfrog.io/ampc-public-docker-release/agent/v7-traceability-agen
 
 ### Customizing the Traceability Agent environment variable file
 
-The `ta_env_vars.env` configuration file contain six sections to customize: the beat input, apimanager, apigateway, central, output ingestion service and log.
+The `ta_env_vars.env` configuration file contain six sections to customize: the beat input, API Manager connectivity, API Gateway connectivity, central connectivity, output ingestion service and logging.
 
 #### Customizing beat input variables
 
