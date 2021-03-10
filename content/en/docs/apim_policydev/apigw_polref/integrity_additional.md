@@ -219,7 +219,6 @@ You can verify signed tokens using a selector expression containing the value of
 * Successful: The policy will be invoked and displayed in the policy execution path, in [Traffic monitor](/docs/apim_reference/monitor_traffic_events_metrics/).
 * Fail: The failure path from the JWT Verify filter is executed.
 
-**Advanced**
 **Payload claim validation policy**:
 Select a policy that will perform additional validation of the token payload. The payload value will be made available to the policy via the ${jwt.body} message attribute, which will be created based on the value of the cty (content-type) header claim.
 
