@@ -16,14 +16,17 @@ Docker deployment is supported on Linux. For a summary of the system requirement
 
 The following new features and enhancements are available in this update.
 
-### placeholder 1
+### Critical header parameter (“crit”)
 
-placeholder text
+A “crit” header was added to the JWT Verify filter in Policy Studio. This allows you to add a “crit” header list to the filter, and the JWT token being processed in the filter is then validated against this list.
 
-For more information, see:
+For more information, see [JWT verify filter](/docs/apim_policydev/apigw_polref/integrity_additional/#jwtverify-filter).
 
-* [some reference 1](/docs/placeholder)
-* [some reference 2](/docs/placeholder)
+### API Manager request rate limiter
+
+Rate limit monitors the number of requests that a user can send to API Manager during an active session. If the number of requests in an individual session exceeds the configured boundaries, the session is terminated and the user must log in again to continue using API Manager.
+
+For more information, see [Configure the API Manager request rate limiter](/docs/apim_administration/apimgr_admin/api_mgmt_config/#configure-api-manager-request-rate-limiter).
 
 ### placeholder 2
 
@@ -86,8 +89,8 @@ table of other issues
 
 The following are known issues for this update.
 
-| Internal ID | Description |
-| ----------- | - |
+| Internal ID | Description                                                                                                                                                                                                                                                                                                                                 |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RDAPI-22573 | Service pack update fails with the following message when passphrases are in use: `"Problem connecting to store: Invalid passphrase for configuration"`.                                                                                                                                                                                    |
 | RDAPI-16486 | Changes in the mapper always require a reload in the Execute Data Maps filter and once reloaded then providing values for the required parameters must be repeated                                                                                                                                                                          |
 | RDAPI-17282 | Connector for Salesforce APIs in API Manager doesn't work or is impossible to configure                                                                                                                                                                                                                                                     |

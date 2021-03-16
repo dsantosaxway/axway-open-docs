@@ -179,12 +179,28 @@ The following options allow to add claims to support OpenID Connect.
 
 ### Advanced (JWS/JWT)
 
-This tab allows you to configure the following settings:
+You can configure the following settings in this tab:
 
 * **Critical extensions (crit)**: Set of values to add to the `crit` header.
 * **Extend JWS Header using a Policy**: Select a policy that when called, the contents of its invocation are added to the JWS Header.
 * **Alternate JWT Audiences**: Allows to set the JWT `aud` value to be an array of case-sensitive strings, each string containing a StringOrURI value.
 * **Extend JWT Payload using a Policy**: Select a policy that when called, the contents of its invocation are added to the JWT Payload.
+
+### Output
+
+From the **Output** tab you can configure how the filter returns a JWS object. You can configure the following options:
+
+* **Set an attribute with the generated signature**: Takes an **Attribute Name** as a parameter. When the filter completes, the JWS object will be accessible in that attribute through the use of a selector.
+* **Add the generated signature to an HTTP Header**: Sets the JWS as an HTTP header on the current circuit Message. You must enter the header name, and select one of the following options:
+    * **Overwrite existing value**: Select this option if the header already exists. If this option is disabled, the header will be appended creating multiple headers of the same name.
+    * **Use body headers**: The header is stored with the body, `${content.body}`.
+    * **Use message headers**: The header is stored in a distinct headers message attribute, `${http.headers}`.
+* **Detach signature with unencoded payload**: Detaching the payload will create a JWS token in the format `<header>..<signature>`. This payload is stored in a separate message attribute to be returned to the user, typically in the `content.body`. This option is used when signing a JSON response, and it supports the OBIE Open Banking message signing specification.
+
+For more information on JWS Detached Content, see [Appendix F of RFC 7515](https://tools.ietf.org/html/rfc7515#appendix-F). This payload is unencoded, and the JWS header contains a header specifying `b64=false` as described in [RFC 7797 Unencoded Payload Option](https://tools.ietf.org/html/rfc7797).
+
+{{< alert title="Note" color="primary" >}}
+The message attribute names for **Generated signature** and **Detach signature payload** must be distinct from one another. Using the same attribute name will result in a validation error in Policy Studio. {{< /alert >}}
 
 ## JWT Verify filter
 
@@ -212,44 +228,92 @@ The resulting payload output is:
 "http://example.com/is_root":true}
 ```
 
-{{< alert title="Note" color="primary" >}}The **JWT Verify** filter automatically detects whether the input JWT is signed with hash-based message authentication code (HMAC) or asymmetric key and uses the corresponding settings as appropriate. For example, you can configure verification with HMAC or certificate, depending on the type of JWT received as input.{{< /alert >}}
+The **JWT Verify** filter automatically detects whether the input JWT is signed with hash-based message authentication code (HMAC) or asymmetric key, and it uses the corresponding settings as appropriate. For example, you can configure verification with HMAC or certificate, depending on the type of JWT received as input.
 
-Configure the following settings on the **JWT Verify** dialog:
+You can configure the following settings on the **JWT Verify** dialog:
 
-**Name**:
-Enter an appropriate name for the filter to display in a policy.
+**Name**: Enter an appropriate name for the filter to display in a policy.
 
-**Token location**:
-Enter the selector expression to retrieve the JWT to be verified. This must contain the value of token in the format of `HEADER.PAYLOAD.SIGNATURE`, but without the `Bearer` prefix. You can use a filter such as **Retrieve attribute from HTTP header** in your policy to get the token from any header. For example: `${http.headers["Authorization"].substring(7)}`
+**Token location**: Enter the selector expression to retrieve the JWT to be verified. This must contain the value of token in the format of `HEADER.PAYLOAD.SIGNATURE`, but without the `Bearer` prefix. You can use a filter, such as [Retrieve attribute from HTTP header](/docs/apim_policydev/apigw_polref/attributes_retrieve/#retrieve-from-http-header-filter), in your policy to get the token from any header. For example: `${http.headers["Authorization"].substring(7)}`
+
+### Key and Algorithm
+
+On the **Key and Algorithm** tab you can configure the location of the verification key, which validates the JWS token. You can choose one of these two options for selecting the key, **Call Policy to discover key** or **Select static key or selector**.
+
+#### Call policy to discover key
+
+Use this option to select a policy to find the appropriate key to verify a JWS Token.
+
+You must ensure that the key in the selected policy follows these two requirements:
+
+* It is either in JWK (a single JWK or a JWK set) or PEM (a PEM encoded X.509 certificate or an RSA Public key) format. You can select one of each, or both options.
+* It is placed in the `content.body` message attribute.
+
+If no key is returned or the key is not in the correct format, the filter will fail. If the key cannot verify the JWS signature, the filter will fail.
+
+Before the policy is called, two message attributes are created containing the JWS header and payload, `jws.header` and `jws.payload`, respectively. You can use these attributes in the discovery policy to locate the correct key.
+
+For example, you can use:
+
+* `${jws.header.jku}` with the [Connect to URL](/docs/apim_policydev/apigw_polref/routing_common/#connect-to-url-filter) filter to retrieve a JWK from an external source.
+* `${jws.header.x5u}` to retrieve a PEM encoded certificate from an external source.
+* `${jws.payload}` to identify the subject of the JWS, and retrieve a key from a data source, such as the KPS.
+
+Other useful headers for identifying the key are: `${jws.header.kid}` and `${jws.header.jwk}`.
+
+#### Select static key or selector
+
+This option allows you to directly specify a certificate for asymmetric keys, a shared secret for HMAC base JWS tokens, or a JWK. Each of these options can be explicitly enabled or disabled. At runtime, the filter will identify the appropriate key based on the algorithm in the token header. If an asymmetric or symmetric key is not available, the filter will use the JWK.
 
 You can configure the following optional settings in the **Verify using RSA/EC public key** section:
 
-**X509 certificate**:
-Select the certificate that is used to verify the payload from the certificate store.
+**X509 certificate**: Select the certificate that is used to verify the payload from the certificate store.
 
 {{< alert title="Note" color="primary" >}}Asymmetric keys are associated with the x509 certificate, but for verification, you only need the public key, which is encoded in the certificate. Alternatively, you can use a JSON Web Key (JWK) with a **Connect to URL** filter to download the key from a known source.{{< /alert >}}
 
-**Selector expression**:
-Alternatively, enter a selector expression to retrieve the alias of the certificate from the certificate store.
+**Selector expression**: Alternatively, enter a selector expression to retrieve the alias of the certificate from the certificate store.
 
 You can configure the following optional settings in the **Verify using symmetric key** section:
 
-**None**:
-Select if you do not want to verify tokens signed with HMAC.
+**None**: Select if you do not want to verify tokens signed with HMAC.
 
-**Shared key**:
-Enter the shared key that was used to sign the payload. The key should be provided as a base64-encoded byte array.
+**Shared key**: Enter the shared key that was used to sign the payload. The key should be provided as a base64-encoded byte array.
 
-**Selector expression**:
-Alternatively, enter a selector expression to obtain the shared key. The value returned by the selector should contain:
+**Selector expression**: Alternatively, enter a selector expression to obtain the shared key. The value returned by the selector should contain:
 
 * Byte array (possibly produced by a different filter)
 * Base64-encoded byte array
 
 You can configure the following optional setting in the **JWK from external source** section:
 
-**JSON web key**:
-You can verify signed tokens using a selector expression containing the value of a `JSON Web Key (JWK)`. The return type of the selector expression must be of type String.
+**JSON web key**: You can verify signed tokens using a selector expression containing the value of a `JSON Web Key (JWK)`. The return type of the selector expression must be of type String.
+
+#### Algorithms
+
+This option shows a list of **Accepted Algorithms**, which is populated with all the algorithms available for JWT signing. It requires that at least one algorithm is selected. The selected algorithms will be validated against the "alg" header of the JWT token being processed. If none are selected, the following message is displayed, **You must enter a value for 'Accepted Algorithms'.**
+
+The runtime validation works as follows:
+
+* Successful, if the "alg" value of the incoming JWT token matches an algorithm on the accepted list.
+* Fail with `reason: The JWS token is not correct`, if the "alg" value of the incoming JWT is null.
+* Fail with `reason: The JWS token is not correct`, if there is no "alg" value in the incoming JWT.
+* Fail with `reason: Alg received not supported in the 'Accepted Algorithms' list defined in the JWT verification filter`, if the "alg" value of the incoming JWT is not selected from the list of accepted algorithms.
+
+**Detached Signature**: The format of a detached JWS is `<header>..<signature>`. When a JWS is in a detached format, its payload is omitted from the JWS and it is sent separately. The payload missing from the JWS must be added to the Message via a selector expression, which is typically a `${content.body}`, but it is configurable in the filter.
+
+The detached signature is disabled by default in the JWT Verify filter. To enable it, select **Support detached payload** and specify the location of the payload, which defaults to `${content.body}`.
+
+The validation of the detached signature works as follows:
+
+* When detached signatures are enabled and a JWS token with a detached signature is processed at runtime, the filter will:
+    * pass, if the correct payload can be found in the location specified.
+    * fail, if the correct payload cannot be found in the location specified.
+* When detached signatures are disabled and a JWS token with a detached signature is processed at runtime, the filter will fail.
+* When detached signatures are either enabled or disabled, and a compact JWS token is processed at runtime, the filter will pass if the token is correct.
+
+For more information about detached JWS, see [Appendix F of JWS RFC 7515](https://tools.ietf.org/html/rfc7515#appendix-F).
+
+{{< alert title="Note" color="primary" >}}When using detached signatures, the detached payload must not be base64 encoded. You must add a `"b64: false"` header claim to the JWS token to enforce this behavior. See [JWS Unencoded Payload Option RFC 7797](https://tools.ietf.org/html/rfc7797) for more information.{{< /alert >}}
 
 **Critical Headers**: You can add a list of acceptable “crit” headers (list of JWT claims), which will be validated against the list of claims present in the “crit” header of the JWT token being processed. The validation works as follows:
 
@@ -258,7 +322,18 @@ You can verify signed tokens using a selector expression containing the value of
 * Fail with `reason: unknown header`, if the JWT token has a crit header list specified and you did not configured any list for your JWT verify filter.
 * Fail with `reason: crit header cannot be empty`, if the JWT token has an empty “crit” header list.
 
-**Claims**: In thi tab, you can select a policy that allows you to enable a claim. If a JWT Header claim policy is defined, the validation of the claim works as follows:
+**Type & Content Type Claims**: You can add a list of acceptable "typ" headers and a list of acceptable "cty" headers. The headers will be validated against the "typ" and "cty" header values present in the JWT being processed.
+
+The list of acceptable headers for either "typ" or "cty" must entirely match an incoming JWT header value. For example, an incoming token with a content type `json` will not match an `application/json` string in the accepted list.
+
+The runtime validation works as follows:
+
+* Successful, if the "typ" or "cty" value of the incoming JWT matches a value on the accepted lists.
+* Successful, if the acceptable "typ" or "cty" lists are empty.
+* Fail with `reason: unknown header`, if the "typ" or "cty" value of the incoming JWT is not present in the accepted list.
+* Fail with `reason: typ/cty header cannot be empty`, if the "typ" or "cty" value of the incoming JWT is empty, and a list is provided.
+
+**Claims**: You can select a policy that allows you to validate a claim. If a JWT Header claim policy is defined, the validation of the claim works as follows:
 
 * Successful: The policy will be invoked and displayed in the policy execution path, in [Traffic monitor](/docs/apim_reference/monitor_traffic_events_metrics/).
 * Fail: The failure path from the JWT Verify filter is executed.
@@ -279,19 +354,15 @@ The **JWT Verify** filter verifies the JWT signature with the token payload onl
 
 ## Sign SMIME message filter
 
-You can use the **SMIME Sign**
-filter to digitally sign a multipart Secure/Multipurpose Internet Mail Extensions (SMIME) message when it passes through the API Gateway core pipeline. The recipient of the message can then verify the integrity of the SMIME message by validating the Public Key Cryptography Standards (PKCS) #7 signature.
+You can use the **SMIME Sign** filter to digitally sign a multipart Secure/Multipurpose Internet Mail Extensions (SMIME) message when it passes through the API Gateway core pipeline. The recipient of the message can then verify the integrity of the SMIME message by validating the Public Key Cryptography Standards (PKCS) #7 signature.
 
 Complete the following fields:
 
-**Name**:
-Enter an appropriate name for the filter to display in a policy.
+**Name**: Enter an appropriate name for the filter to display in a policy.
 
-**Sign Using Key**:
-Select the certificate that contains the public key associated with the private signing key to be used to sign the message.
+**Sign Using Key**: Select the certificate that contains the public key associated with the private signing key to be used to sign the message.
 
-**Create Detached Signature in Attachment**:
-Specifies whether to create a detached digital signature in the message attachment. This is selected by default. For example, this is useful when the software reading the message does not understand the PKCS#7 binary structure, because it can still display the signed content, but without verifying the signature.
+**Create Detached Signature in Attachment**: Specifies whether to create a detached digital signature in the message attachment. This is selected by default. For example, this is useful when the software reading the message does not understand the PKCS#7 binary structure, because it can still display the signed content, but without verifying the signature.
 
 If this is not selected, the message content is embedded with the PKCS#7 binary signature. This means that user agents that do not understand PKCS#7 cannot display the signed content. Intermediate systems between the sender and final recipient can modify the text content slightly (for example, line wrapping, whitespace, or text encoding). This might cause the message to fail signature validation due to changes in the signed text that are not malicious, nor necessarily affecting the meaning of the text.
 
@@ -304,14 +375,10 @@ You can select the certificates that contain the public keys to be used to verif
 
 Complete the following fields:
 
-**Name**:
-Enter an appropriate name for the filter to display in a policy.
+**Name**: Enter an appropriate name for the filter to display in a policy.
 
-**Certificates from the following list**:
-Select the certificates that contain the public keys to be used to verify the signature. This is the default option.
+**Certificates from the following list**: Select the certificates that contain the public keys to be used to verify the signature. This is the default option.
 
-**Certificate in attribute**:
-Alternatively, enter the message attribute that specifies the certificate that contains the public key to be used to verify the signature. Defaults to `${certificate}`.
+**Certificate in attribute**: Alternatively, enter the message attribute that specifies the certificate that contains the public key to be used to verify the signature. Defaults to `${certificate}`.
 
-**Remove Outer Envelope if Verification is Successful**:
-Select this option to remove the PKCS#7 signature and all its associated data from the message if it verifies successfully.
+**Remove Outer Envelope if Verification is Successful**: Select this option to remove the PKCS#7 signature and all its associated data from the message if it verifies successfully.
