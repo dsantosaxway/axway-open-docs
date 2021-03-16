@@ -321,7 +321,7 @@ The runtime validation works as follows:
 
 * Successful: The policy will be invoked and displayed in the policy execution path, in [Traffic monitor](/docs/apim_reference/monitor_traffic_events_metrics/).
 * Fail: The failure path from the JWT Verify filter is executed.
-### Advanced (JWS/JWT)
+### Advanced
 
 You can configure the following settings in this tab:
 
